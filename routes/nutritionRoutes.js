@@ -1,6 +1,7 @@
 // routes/nutritionRoutes.js
 const express = require('express');
 const router = express.Router();
+const UserNutritionProfile = require('../models/UserNutritionProfile');
 
 // Nutrition calculation endpoint
 router.post('/calculate-nutrition', (req, res) => {
@@ -42,31 +43,12 @@ router.post('/calculate-nutrition', (req, res) => {
         let proteinPercentage, carbsPercentage, fatPercentage;
 
         switch(dietType) {
-            case 'balanced':
-                proteinPercentage = 0.20;
-                carbsPercentage = 0.50;
-                fatPercentage = 0.30;
-                break;
-            case 'low-fat':
-                proteinPercentage = 0.25;
-                carbsPercentage = 0.60;
-                fatPercentage = 0.15;
-                break;
-            case 'low-carb':
-                proteinPercentage = 0.30;
-                carbsPercentage = 0.20;
-                fatPercentage = 0.50;
-                break;
             case 'high-protein':
                 proteinPercentage = 0.35;
                 carbsPercentage = 0.40;
                 fatPercentage = 0.25;
                 break;
-            case 'custom':
-                proteinPercentage = 0.20;
-                carbsPercentage = 0.50;
-                fatPercentage = 0.30;
-                break;
+            case 'balanced':
             default:
                 proteinPercentage = 0.20;
                 carbsPercentage = 0.50;
@@ -121,6 +103,34 @@ router.post('/calculate-nutrition', (req, res) => {
         res.status(500).json({ 
             error: 'Internal server error during calculation' 
         });
+    }
+});
+
+// Save user nutrition profile
+router.post('/profiles', async (req, res) => {
+    try {
+        const { age, gender, height, weight, activity, goal, dietType, nutrition } = req.body;
+
+        if (!age || !height || !weight || !nutrition) {
+            return res.status(400).json({ error: 'Missing required profile or nutrition data' });
+        }
+
+        const profile = new UserNutritionProfile({
+            age,
+            gender,
+            height,
+            weight,
+            activity,
+            goal,
+            dietType,
+            nutrition
+        });
+
+        const saved = await profile.save();
+        res.json({ success: true, profile: saved });
+    } catch (err) {
+        console.error('Error saving profile:', err);
+        res.status(500).json({ error: 'Failed to save profile' });
     }
 });
 
